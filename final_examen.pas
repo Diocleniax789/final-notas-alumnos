@@ -1,24 +1,32 @@
 PROGRAM final_examen_notas;
 USES crt;
 
+CONST
+     ULTIMA_POSICION_X = 6;
+
 TYPE
     basico = RECORD
      alumno: integer;
      codigo_asignatura: string[6];
      nota: real;
+     activo: boolean;
     END;
 
     profesional = RECORD
      alumno: integer;
      codigo_asignatura: string [6];
      nota: real;
+     activo: boolean;
     END;
 
     juntos = RECORD
      alumno: integer;
      codigo_asignatura: string [6];
      nota: real;
+     activo: boolean;
     END;
+
+    cadena = array[1..6]of string;
 
 VAR
    archivo_basico: FILE OF basico;
@@ -26,6 +34,7 @@ VAR
    archivo_juntos: FILE OF juntos;
    registro_basico: basico;
    registro_profesional: profesional;
+   cad: cadena;
 
 PROCEDURE crea_archivo_basico;
  BEGIN
@@ -45,6 +54,131 @@ PROCEDURE crea_archivo_juntos;
  close(archivo_juntos);
  END;
 
+FUNCTION valida_codigo_asignatura(): string;
+VAR
+ i,f: integer;
+ caracter,aux,aux_2,concatenar,codigo: string;
+ BEGIN
+ writeln('>>> Ingrese codigo de asignatura <unicamente 6 caracteres>');
+ caracter:= readkey;
+ i:= 0;
+ WHILE caracter <> #13 DO
+  BEGIN
+  IF caracter <> #8 THEN
+   BEGIN
+   gotoxy(whereX,whereY);
+   IF whereX <= ULTIMA_POSICION_X THEN
+    BEGIN
+    write(caracter);
+    i:= i + 1;
+    cad[i]:= caracter;
+    END;
+   END
+  ELSE
+   BEGIN
+   gotoxy(whereX -  1,whereY);
+   write(' ',#8);
+   cad[i]:= ' ';
+   IF (i >= 1) AND (1 <= ULTIMA_POSICION_X) THEN
+    i:= i - 1
+   ELSE
+    i:= 0;
+   END;
+  caracter:= readkey;
+  END;
+  aux:= ' ';
+  FOR f:= 1 TO 6 DO
+   BEGIN
+   IF aux = ' ' THEN
+    aux:= cad[f]
+   ELSE
+    BEGIN
+    aux_2:= cad[f];
+    concatenar:= concat(aux,aux_2);
+    aux:= concatenar;
+    END;
+   END;
+ codigo:= aux;
+ valida_codigo_asignatura:= codigo;
+ END;
+
+PROCEDURE cargar_alumnos_basicos;
+VAR
+ op,long_cod_asig: integer;
+ codigo_asig,op_1: string;
+ BEGIN
+ REPEAT
+ textcolor(lightgreen);
+ writeln('CARGUE AQUI AL ALUMNO CON SUS RESPECTIVOS DATOS');
+ writeln('-----------------------------------------------');
+ clrscr;
+ textcolor(white);
+ reset(archivo_basico);
+ writeln();
+ write('>>> Ingrese nro de legajo: ');
+ readln(registro_basico.alumno);
+ writeln();
+ REPEAT
+ textcolor(white);
+ codigo_asig:= valida_codigo_asignatura;
+ long_cod_asig:= Length(codigo_asig);
+ writeln();
+ IF long_cod_asig < 6 THEN
+  BEGIN
+  textcolor(lightred);
+  writeln();
+  writeln('////////////////////////////////////////////////////////////');
+  writeln('X EL CODIGO DEBER SER DE 6 CARACTERES. VUELVA A INTENTARLO X');
+  writeln('////////////////////////////////////////////////////////////');
+  writeln();
+  END
+ UNTIL (long_cod_asig = 6);
+ registro_basico.codigo_asignatura:= codigo_asig;
+ writeln();
+ write('>>> Ingrese la nota: ');
+ readln(registro_basico.nota);
+ writeln();
+ writeln('Estado del alumno');
+ writeln('-----------------');
+ writeln();
+ writeln('1. Activo');
+ writeln('2. No Activo');
+ writeln();
+ write('>>> Seleccione estado del alumno: ');
+ readln(op);
+ CASE op OF
+  1:BEGIN
+    registro_basico.activo:= true;
+    END;
+  2:BEGIN
+    registro_basico.activo:= false;
+    END;
+ END;
+ close(archivo_basico);
+ textcolor(lightcyan);
+ writeln();
+ writeln('====================================');
+ writeln('*** REGISTRO GUARDADO CON EXITO! ***');
+ writeln('====================================');
+ writeln();
+ REPEAT
+ textcolor(yellow);
+ writeln('---------------------------------------------');
+ write('Desea volver a cargar otro alumno[s/n]: ');
+ readln(op_1);
+ IF (op_1 <> 's') AND (op_1 <> 'n') THEN
+  BEGIN
+  textcolor(lightred);
+  writeln();
+  writeln('///////////////////////////////////////');
+  writeln('X VALOR INCORRECTO. VUELVA A INTENTAR X');
+  writeln('///////////////////////////////////////');
+  writeln();
+  END;
+ UNTIL (op_1 = 's') OR (op_1 = 'n');
+ UNTIL (op_1 = 'n');
+ END;
+
 PROCEDURE menu_principal;
 VAR
  op: integer;
@@ -52,20 +186,31 @@ VAR
  REPEAT
  textcolor(white);
  clrscr;
- writeln('1. Generar listado de alumnos de ambos cursos.');
- writeln('2. Generar listado de promedios por alumno.');
- writeln('3. Salir.');
+ writeln('1. Cargar alumnos basicos.');
+ writeln('2. Cargar alumnos profesionales.');
+ writeln('3. Generar listado de alumnos de ambos cursos.');
+ writeln('4. Generar listado de promedios por alumno.');
+ writeln('5. Dar de baja algun alumno.');
+ writeln('6. Salir.');
  writeln();
  writeln('---------------------');
  write('Seleccione opcion: ');
  readln(op);
  CASE op OF
   1:BEGIN
+    cargar_alumnos_basicos;
     END;
-  2:BEGIN
+  {2:BEGIN
     END;
+  3:BEGIN
+    END;
+  4:BEGIN
+    END;
+  5:BEGIN
+    END;}
+
  END;
- UNTIL (op = 3);
+ UNTIL (op = 6);
  END;
 
 BEGIN
