@@ -1,27 +1,13 @@
 PROGRAM final_examen_notas;
-USES crt;
+USES crt, Dos;
 
 CONST
      ULTIMA_POSICION_X = 6;
 
 TYPE
-    basico = RECORD
-     alumno: integer;
+    DatoAlumno = RECORD
+     legajo: integer;
      codigo_asignatura: string[6];
-     nota: real;
-     activo: boolean;
-    END;
-
-    profesional = RECORD
-     alumno: integer;
-     codigo_asignatura: string [6];
-     nota: real;
-     activo: boolean;
-    END;
-
-    juntos = RECORD
-     alumno: integer;
-     codigo_asignatura: string [6];
      nota: real;
      activo: boolean;
     END;
@@ -29,11 +15,8 @@ TYPE
     cadena = array[1..6]of string;
 
 VAR
-   archivo_basico: FILE OF basico;
-   archivo_profesional: FILE OF profesional;
-   archivo_juntos: FILE OF juntos;
-   registro_basico: basico;
-   registro_profesional: profesional;
+   archivo_basico,archivo_profesional,archivo_juntos: FILE OF DatoAlumno;
+   registro_basico,registro_profesional,registro_juntos: DatoAlumno;
    cad: cadena;
 
 PROCEDURE crea_archivo_basico;
@@ -44,20 +27,14 @@ PROCEDURE crea_archivo_basico;
 
 PROCEDURE crea_archivo_profesional;
  BEGIN
- rewrite(archivo_basico);
- close(archivo_basico);
- END;
-
-PROCEDURE crea_archivo_juntos;
- BEGIN
- rewrite(archivo_juntos);
- close(archivo_juntos);
+ rewrite(archivo_profesional);
+ close(archivo_profesional);
  END;
 
 PROCEDURE ordena_archivo_basico;
 VAR
  i,j: integer;
- reg_aux: basico;
+ reg_aux: DatoAlumno;
  BEGIN
  FOR i:= 0 TO filesize(archivo_basico) - 2 DO
   BEGIN
@@ -67,7 +44,7 @@ VAR
    read(archivo_basico,registro_basico);
    seek(archivo_basico,j);
    read(archivo_basico,reg_aux);
-   IF registro_basico.alumno > reg_aux.alumno THEN
+   IF registro_basico.legajo > reg_aux.legajo THEN
     BEGIN
     seek(archivo_basico,i);
     write(archivo_basico,reg_aux);
@@ -81,7 +58,7 @@ VAR
 PROCEDURE ordena_archivo_archivo_profesional;
 VAR
  i,j: integer;
- reg_aux: profesional;
+ reg_aux: DatoAlumno;
  BEGIN
  FOR i:= 0 TO filesize(archivo_profesional) - 2 DO
   BEGIN
@@ -91,7 +68,7 @@ VAR
    read(archivo_profesional,registro_profesional);
    seek(archivo_profesional,j);
    read(archivo_profesional,reg_aux);
-   IF registro_profesional.alumno > reg_aux.alumno THEN
+   IF registro_profesional.legajo > reg_aux.legajo THEN
     BEGIN
     seek(archivo_profesional,i);
     write(archivo_profesional,reg_aux);
@@ -102,6 +79,29 @@ VAR
   END;
  END;
 
+PROCEDURE ordena_archivo_archivo_juntos;
+VAR
+ i,j: integer;
+ reg_aux: DatoAlumno;
+ BEGIN
+ FOR i:= 0 TO filesize(archivo_juntos) - 2 DO
+  BEGIN
+  FOR j:= i + 1 TO filesize(archivo_juntos) - 1 DO
+   BEGIN
+   seek(archivo_juntos,i);
+   read(archivo_juntos,registro_juntos);
+   seek(archivo_juntos,j);
+   read(archivo_juntos,reg_aux);
+   IF registro_juntos.legajo > reg_aux.legajo THEN
+    BEGIN
+    seek(archivo_juntos,i);
+    write(archivo_juntos,reg_aux);
+    seek(archivo_juntos,j);
+    write(archivo_juntos,registro_juntos);
+    END;
+   END;
+  END;
+ END;
 
 FUNCTION valida_codigo_asignatura(): string;
 VAR
@@ -165,7 +165,7 @@ VAR
  reset(archivo_basico);
  writeln();
  write('>>> Ingrese nro de legajo: ');
- readln(registro_basico.alumno);
+ readln(registro_basico.legajo);
  writeln();
  REPEAT
  textcolor(white);
@@ -245,7 +245,7 @@ VAR
  reset(archivo_profesional);
  writeln();
  write('>>> Ingrese nro de legajo: ');
- readln(registro_profesional.alumno);
+ readln(registro_profesional.legajo);
  writeln();
  REPEAT
  textcolor(white);
@@ -311,6 +311,79 @@ VAR
  UNTIL (op_1 = 'n');
  END;
 
+PROCEDURE intercalacion;
+VAR
+ f,i,j,n,m: integer;
+ BEGIN
+ rewrite(archivo_juntos);
+ reset(archivo_basico);
+ reset(archivo_profesional);
+ i:= 1;
+ j:= 1;
+ n:= filesize(archivo_basico);
+ m:= filesize(archivo_profesional);
+ read(archivo_basico,registro_basico);
+ read(archivo_profesional,registro_profesional);
+ WHILE (i <= n) AND (j <= m) DO
+  BEGIN
+  IF registro_basico.legajo > registro_profesional.legajo THEN
+   BEGIN
+   write(archivo_juntos,registro_basico);
+   IF NOT eof(archivo_basico) THEN
+    read(archivo_basico,registro_basico);
+    i:= i + 1;
+   END
+  ELSE
+   BEGIN
+   write(archivo_juntos,registro_profesional);
+   IF NOT eof(archivo_profesional) THEN
+    read(archivo_profesional,registro_profesional);
+   j:= j + 1;
+   END;
+  END;
+  IF i > n THEN
+   BEGIN
+   FOR f:= j TO m DO
+    BEGIN
+    write(archivo_juntos,registro_profesional);
+    IF NOT eof(archivo_profesional) THEN
+     read(archivo_profesional,registro_profesional);
+    END;
+    END
+  ELSE
+   FOR f:= i TO n DO
+    BEGIN
+    write(archivo_juntos,registro_basico);
+    IF NOT eof(archivo_basico) THEN
+     read(archivo_basico,registro_basico);
+    END;
+ ordena_archivo_archivo_juntos;
+ close(archivo_basico);
+ close(archivo_profesional);
+ close(archivo_juntos);
+ END;
+
+PROCEDURE muestra_listado;
+ BEGIN
+ reset(archivo_juntos);
+ WHILE NOT eof(archivo_juntos) DO
+  BEGIN
+  read(archivo_juntos,registro_juntos);
+  write(registro_juntos.legajo,'  ',registro_juntos.codigo_asignatura,'  ',registro_juntos.nota,'  ',registro_juntos.activo);
+  writeln();
+  END;
+ close(archivo_juntos);
+ writeln();
+ writeln('Presione enter para salir...');
+ readln();
+ END;
+
+PROCEDURE generar_listado_alumnos_basico_profesional;
+ BEGIN
+ intercalacion;
+ muestra_listado;
+ END;
+
 PROCEDURE menu_principal;
 VAR
  op: integer;
@@ -335,9 +408,11 @@ VAR
   2:BEGIN
     cargar_alumnos_profesionales;
     END;
-  {3:BEGIN
+  3:BEGIN
+    clrscr;
+    generar_listado_alumnos_basico_profesional;
     END;
-  4:BEGIN
+  {4:BEGIN
     END;
   5:BEGIN
     END;}
@@ -352,6 +427,5 @@ assign(archivo_profesional,'C:\Users\JULIO\Desktop\final-notas-alumnos\profesion
 assign(archivo_juntos,'C:\Users\JULIO\Desktop\final-notas-alumnos\juntos.dat');
 crea_archivo_basico;
 crea_archivo_profesional;
-crea_archivo_juntos;
 menu_principal;
 END.
