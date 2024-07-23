@@ -311,7 +311,7 @@ VAR
  UNTIL (op_1 = 'n');
  END;
 
-PROCEDURE intercalacion;
+PROCEDURE intercalacion;        ///merge
 VAR
  f,i,j,n,m: integer;
  BEGIN
@@ -324,6 +324,7 @@ VAR
  m:= filesize(archivo_profesional);
  read(archivo_basico,registro_basico);
  read(archivo_profesional,registro_profesional);
+
  WHILE (i <= n) AND (j <= m) DO
   BEGIN
   IF registro_basico.legajo > registro_profesional.legajo THEN
@@ -331,7 +332,7 @@ VAR
    write(archivo_juntos,registro_basico);
    IF NOT eof(archivo_basico) THEN
     read(archivo_basico,registro_basico);
-    i:= i + 1;
+   i:= i + 1;
    END
   ELSE
    BEGIN
@@ -341,6 +342,7 @@ VAR
    j:= j + 1;
    END;
   END;
+
   IF i > n THEN
    BEGIN
    FOR f:= j TO m DO
@@ -357,6 +359,8 @@ VAR
     IF NOT eof(archivo_basico) THEN
      read(archivo_basico,registro_basico);
     END;
+
+
  ordena_archivo_archivo_juntos;
  close(archivo_basico);
  close(archivo_profesional);
