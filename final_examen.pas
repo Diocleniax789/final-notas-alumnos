@@ -54,6 +54,55 @@ PROCEDURE crea_archivo_juntos;
  close(archivo_juntos);
  END;
 
+PROCEDURE ordena_archivo_basico;
+VAR
+ i,j: integer;
+ reg_aux: basico;
+ BEGIN
+ FOR i:= 0 TO filesize(archivo_basico) - 2 DO
+  BEGIN
+  FOR j:= i + 1 TO filesize(archivo_basico) - 1 DO
+   BEGIN
+   seek(archivo_basico,i);
+   read(archivo_basico,registro_basico);
+   seek(archivo_basico,j);
+   read(archivo_basico,reg_aux);
+   IF registro_basico.alumno > reg_aux.alumno THEN
+    BEGIN
+    seek(archivo_basico,i);
+    write(archivo_basico,reg_aux);
+    seek(archivo_basico,j);
+    write(archivo_basico,registro_basico);
+    END;
+   END;
+  END;
+ END;
+
+PROCEDURE ordena_archivo_archivo_profesional;
+VAR
+ i,j: integer;
+ reg_aux: profesional;
+ BEGIN
+ FOR i:= 0 TO filesize(archivo_profesional) - 2 DO
+  BEGIN
+  FOR j:= i + 1 TO filesize(archivo_profesional) - 1 DO
+   BEGIN
+   seek(archivo_profesional,i);
+   read(archivo_profesional,registro_profesional);
+   seek(archivo_profesional,j);
+   read(archivo_profesional,reg_aux);
+   IF registro_profesional.alumno > reg_aux.alumno THEN
+    BEGIN
+    seek(archivo_profesional,i);
+    write(archivo_profesional,reg_aux);
+    seek(archivo_profesional,j);
+    write(archivo_profesional,registro_profesional);
+    END;
+   END;
+  END;
+ END;
+
+
 FUNCTION valida_codigo_asignatura(): string;
 VAR
  i,f: integer;
@@ -154,7 +203,90 @@ VAR
     registro_basico.activo:= false;
     END;
  END;
+ seek(archivo_basico,filesize(archivo_basico));
+ write(archivo_basico,registro_basico);
+ ordena_archivo_basico;
  close(archivo_basico);
+ textcolor(lightcyan);
+ writeln();
+ writeln('====================================');
+ writeln('*** REGISTRO GUARDADO CON EXITO! ***');
+ writeln('====================================');
+ writeln();
+ REPEAT
+ textcolor(yellow);
+ writeln('---------------------------------------------');
+ write('Desea volver a cargar otro alumno[s/n]: ');
+ readln(op_1);
+ IF (op_1 <> 's') AND (op_1 <> 'n') THEN
+  BEGIN
+  textcolor(lightred);
+  writeln();
+  writeln('///////////////////////////////////////');
+  writeln('X VALOR INCORRECTO. VUELVA A INTENTAR X');
+  writeln('///////////////////////////////////////');
+  writeln();
+  END;
+ UNTIL (op_1 = 's') OR (op_1 = 'n');
+ UNTIL (op_1 = 'n');
+ END;
+
+PROCEDURE cargar_alumnos_profesionales;
+VAR
+ op,long_cod_asig: integer;
+ codigo_asig,op_1: string;
+ BEGIN
+ REPEAT
+ textcolor(lightgreen);
+ writeln('CARGUE AQUI AL ALUMNO CON SUS RESPECTIVOS DATOS');
+ writeln('-----------------------------------------------');
+ clrscr;
+ textcolor(white);
+ reset(archivo_profesional);
+ writeln();
+ write('>>> Ingrese nro de legajo: ');
+ readln(registro_profesional.alumno);
+ writeln();
+ REPEAT
+ textcolor(white);
+ codigo_asig:= valida_codigo_asignatura;
+ long_cod_asig:= Length(codigo_asig);
+ writeln();
+ IF long_cod_asig < 6 THEN
+  BEGIN
+  textcolor(lightred);
+  writeln();
+  writeln('////////////////////////////////////////////////////////////');
+  writeln('X EL CODIGO DEBER SER DE 6 CARACTERES. VUELVA A INTENTARLO X');
+  writeln('////////////////////////////////////////////////////////////');
+  writeln();
+  END
+ UNTIL (long_cod_asig = 6);
+ registro_profesional.codigo_asignatura:= codigo_asig;
+ writeln();
+ write('>>> Ingrese la nota: ');
+ readln(registro_profesional.nota);
+ writeln();
+ writeln('Estado del alumno');
+ writeln('-----------------');
+ writeln();
+ writeln('1. Activo');
+ writeln('2. No Activo');
+ writeln();
+ write('>>> Seleccione estado del alumno: ');
+ readln(op);
+ CASE op OF
+  1:BEGIN
+    registro_profesional.activo:= true;
+    END;
+  2:BEGIN
+    registro_profesional.activo:= false;
+    END;
+ END;
+ seek(archivo_profesional,filesize(archivo_profesional));
+ write(archivo_profesional,registro_profesional);
+ ordena_archivo_archivo_profesional;
+ close(archivo_profesional);
  textcolor(lightcyan);
  writeln();
  writeln('====================================');
@@ -200,9 +332,10 @@ VAR
   1:BEGIN
     cargar_alumnos_basicos;
     END;
-  {2:BEGIN
+  2:BEGIN
+    cargar_alumnos_profesionales;
     END;
-  3:BEGIN
+  {3:BEGIN
     END;
   4:BEGIN
     END;
