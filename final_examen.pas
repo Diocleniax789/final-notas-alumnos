@@ -113,6 +113,17 @@ FUNCTION verificar_estado_archivo_basico(): boolean;
  close(archivo_basico);
  END;
 
+FUNCTION verificar_estado_archivo_profesional(): boolean;
+ BEGIN
+ reset(archivo_profesional);
+ IF filesize(archivo_profesional) = 0 THEN
+  verificar_estado_archivo_profesional:= true
+ ELSE
+  verificar_estado_archivo_profesional:= false;
+ close(archivo_profesional);
+ END;
+
+
 FUNCTION valida_codigo_asignatura(): string;
 VAR
  i,f: integer;
@@ -396,7 +407,7 @@ PROCEDURE muestra_listado;
 
 PROCEDURE generar_listado_alumnos_basico_profesional;
  BEGIN
-  IF verificar_estado_archivo_basico() = true THEN
+  IF (verificar_estado_archivo_basico() = true) OR (verificar_estado_archivo_profesional = true) THEN
   BEGIN
   clrscr;
   textcolor(lightred);
