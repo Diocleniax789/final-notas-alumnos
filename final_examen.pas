@@ -332,7 +332,7 @@ VAR
  UNTIL (op_1 = 'n');
  END;
 
-PROCEDURE intercalacion;        ///merge
+PROCEDURE intercalacion;        /// MERGE
 VAR
  f,i,j,n,m: integer;
  BEGIN
@@ -397,7 +397,7 @@ PROCEDURE muestra_listado;
   BEGIN
   read(archivo_juntos,registro_juntos);
   write(registro_juntos.legajo:1,' | ',registro_juntos.codigo_asignatura:1,' | ',registro_juntos.nota:1,' | ',registro_juntos.activo);
-  writeln('--------------------------------------------------------------');
+  writeln();
   END;
  close(archivo_juntos);
  writeln();
@@ -425,55 +425,68 @@ PROCEDURE generar_listado_alumnos_basico_profesional;
  END;
 
 PROCEDURE generar_listado_promedios_por_alumno;
-VAR
- contador_materias,prom,notas_real_to_integer: integer;
- acumulador_notas: real;
- anterior: integer;
- BEGIN
- IF (verificar_estado_archivo_basico() = true) OR (verificar_estado_archivo_profesional = true) THEN
+VAR                                                                   /////// CORTE DE CONTROL
+  contador_materias, prom, notas_real_to_integer: integer;
+  acumulador_notas: real;
+  anterior: integer;
+BEGIN
+  IF (verificar_estado_archivo_basico() = true) OR (verificar_estado_archivo_profesional() = true) THEN
   BEGIN
-  clrscr;
-  textcolor(lightred);
-  writeln();
-  writeln('//////////////////////////////////////////////////////////////////');
-  writeln('X COMO UNO DE LOS ARCHIVOS AUN ESTA VACIO, NO SE PUEDE CONTINUAR X');
-  writeln('//////////////////////////////////////////////////////////////////');
-  delay(2000);
+    clrscr;
+    textcolor(lightred);
+    writeln();
+    writeln('//////////////////////////////////////////////////////////////////');
+    writeln('X COMO UNO DE LOS ARCHIVOS AUN ESTA VACIO, NO SE PUEDE CONTINUAR X');
+    writeln('//////////////////////////////////////////////////////////////////');
+    delay(2000);
   END
- ELSE
+  ELSE
   BEGIN
-  reset(archivo_juntos);
-  WHILE NOT eof(archivo_juntos) DO
-   BEGIN
-   contador_materias:= 0;
-   acumulador_notas:= 0;
-   read(archivo_juntos,registro_juntos);
-   anterior:= registro_juntos.legajo;
-   WHILE (anterior = registro_juntos.legajo) AND (NOT eof(archivo_juntos)) DO
+    clrscr;
+    reset(archivo_juntos);
+    WHILE NOT eof(archivo_juntos) DO
     BEGIN
-    contador_materias:= contador_materias + 1;
-    acumulador_notas:= acumulador_notas + registro_juntos.nota;
-    read(archivo_juntos,registro_juntos);
+      contador_materias := 0;
+      acumulador_notas := 0;
+      read(archivo_juntos, registro_juntos);
+      anterior := registro_juntos.legajo;
+      WHILE (anterior = registro_juntos.legajo) AND (NOT eof(archivo_juntos)) DO
+      BEGIN
+        contador_materias := contador_materias + 1;
+        acumulador_notas := acumulador_notas + registro_juntos.nota;
+        read(archivo_juntos, registro_juntos);
+      END;
+      IF anterior <> registro_juntos.legajo THEN
+       BEGIN
+       notas_real_to_integer := Trunc(acumulador_notas);
+       prom := notas_real_to_integer div contador_materias;
+       writeln('Legajo: ',anterior,'Promedio: ',prom);
+       seek(archivo_juntos,filepos(archivo_juntos)-1);
+       END;
     END;
-    notas_real_to_integer:= Trunc(acumulador_notas);
-    prom:= notas_real_to_integer div contador_materias;
-   IF anterior <> registro_juntos.legajo THEN
-    BEGIN
-    writeln(anterior,prom);
-    seek(archivo_juntos,filepos(archivo_juntos) - 1);
-    END;
-   IF eof(archivo_juntos) THEN
-    IF anterior <> registro_juntos.legajo THEN
-     writeln(registro_juntos.legajo,prom)
-    ELSE
-     writeln(anterior,prom);
-   END;
-  close(archivo_juntos);
+
+    IF eof(archivo_juntos) THEN
+     IF anterior <> registro_juntos.legajo THEN
+        BEGIN
+        notas_real_to_integer := Trunc(acumulador_notas);
+        prom := notas_real_to_integer div contador_materias;
+        writeln('Legajo: ',anterior,'Promedio: ',prom);
+        END
+     ELSE
+        BEGIN
+        notas_real_to_integer := Trunc(acumulador_notas);
+        prom := notas_real_to_integer div contador_materias;
+        writeln('Legajo: ',anterior,'Promedio: ',prom);
+        END;
+
+
+
+    close(archivo_juntos);
+    writeln();
+    writeln('Presione enter para salir...');
+    readln();
   END;
-  writeln();
-  writeln('Presione enter para salir...');
-  readln();
- END;
+END;
 
 PROCEDURE menu_principal;
 VAR
