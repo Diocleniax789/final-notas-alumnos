@@ -103,6 +103,16 @@ VAR
   END;
  END;
 
+FUNCTION verificar_estado_archivo_basico(): boolean;
+ BEGIN
+ reset(archivo_basico);
+ IF filesize(archivo_basico) = 0 THEN
+  verificar_estado_archivo_basico:= true
+ ELSE
+  verificar_estado_archivo_basico:= false;
+ close(archivo_basico);
+ END;
+
 FUNCTION valida_codigo_asignatura(): string;
 VAR
  i,f: integer;
@@ -370,11 +380,13 @@ VAR
 PROCEDURE muestra_listado;
  BEGIN
  reset(archivo_juntos);
+ writeln('LISTADO DE ALUMNOS TANTO BASICOS COMO PROFESIONALES');
+ writeln('---------------------------------------------------');
  WHILE NOT eof(archivo_juntos) DO
   BEGIN
   read(archivo_juntos,registro_juntos);
-  write(registro_juntos.legajo,'  ',registro_juntos.codigo_asignatura,'  ',registro_juntos.nota,'  ',registro_juntos.activo);
-  writeln();
+  write(registro_juntos.legajo:1,' | ',registro_juntos.codigo_asignatura:1,' | ',registro_juntos.nota:1,' | ',registro_juntos.activo);
+  writeln('--------------------------------------------------------------');
   END;
  close(archivo_juntos);
  writeln();
@@ -384,8 +396,59 @@ PROCEDURE muestra_listado;
 
 PROCEDURE generar_listado_alumnos_basico_profesional;
  BEGIN
- intercalacion;
- muestra_listado;
+  IF verificar_estado_archivo_basico() = true THEN
+  BEGIN
+  clrscr;
+  textcolor(lightred);
+  writeln();
+  writeln('//////////////////////////////////////////////////////////////////');
+  writeln('X COMO UNO DE LOS ARCHIVOS AUN ESTA VACIO, NO SE PUEDE CONTINUAR X');
+  writeln('//////////////////////////////////////////////////////////////////');
+  delay(2000);
+  END
+ ELSE
+  BEGIN
+  intercalacion;
+  muestra_listado;
+  END;
+ END;
+
+PROCEDURE generar_listado_promedios_por_alumno;
+VAR
+ contador_materias,prom,notas_real_to_integer: integer;
+ acumulador_notas: real;
+ anterior: integer;
+ BEGIN
+ reset(archivo_juntos);
+ WHILE NOT eof(archivo_juntos) DO
+  BEGIN
+  contador_materias:= 0;
+  acumulador_notas:= 0;
+  read(archivo_juntos,registro_juntos);
+  anterior:= registro_juntos.legajo;
+  WHILE (anterior = registro_juntos.legajo) AND (NOT eof(archivo_juntos)) DO
+   BEGIN
+   contador_materias:= contador_materias + 1;
+   acumulador_notas:= acumulador_notas + registro_juntos.nota;
+   read(archivo_juntos,registro_juntos);
+   END;
+   notas_real_to_integer:= Trunc(acumulador_notas);
+   prom:= notas_real_to_integer div contador_materias;
+  IF anterior <> registro_juntos.legajo THEN
+   BEGIN
+   writeln(anterior,prom);
+   seek(archivo_juntos,filepos(archivo_juntos) - 1);
+   END;
+  IF eof(archivo_juntos) THEN
+   IF anterior <> registro_juntos.legajo THEN
+    writeln(registro_juntos.legajo,prom)
+   ELSE
+    writeln(anterior,prom);
+  END;
+ close(archivo_juntos);
+ writeln();
+ writeln('Presione enter para salir...');
+ readln();
  END;
 
 PROCEDURE menu_principal;
@@ -416,9 +479,10 @@ VAR
     clrscr;
     generar_listado_alumnos_basico_profesional;
     END;
-  {4:BEGIN
+  4:BEGIN
+    generar_listado_promedios_por_alumno;
     END;
-  5:BEGIN
+  {5:BEGIN
     END;}
 
  END;
