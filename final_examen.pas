@@ -584,6 +584,102 @@ VAR
     UNTIL (opcion = 'n');
 END;
 
+PROCEDURE dar_de_baja_en_profesional;
+VAR
+ opcion: string;
+ legajo,cont: integer;
+ BEGIN
+ REPEAT
+ clrscr;
+ textcolor(white);
+ reset(archivo_profesional);
+ writeln('DAR DE BAJA ALGUN ALUMNO');
+ writeln('------------------------');
+ writeln();
+ write('>>> Ingrese un nro de legajo: ');
+ readln(legajo);
+ cont:= 0;
+ WHILE NOT eof(archivo_profesional) DO
+  BEGIN
+  read(archivo_profesional,registro_profesional);
+  IF (registro_profesional.legajo = legajo) AND (registro_profesional.activo = true) THEN
+   BEGIN
+   cont:= cont + 1;
+   write(registro_profesional.legajo:1,' | ',registro_profesional.codigo_asignatura:1,' | ',registro_profesional.nota:1,' | ',registro_profesional.activo);
+   writeln();
+   END;
+  END;
+  IF cont = 0 THEN
+   BEGIN
+   textcolor(yellow);
+   writeln();
+   writeln('# NO HAY REGISTROS PARA DAR DE BAJA #');
+   writeln();
+   END
+  ELSE
+   BEGIN
+   REPEAT
+   write('Desea dar de baja todos los registros pertenecientes a este alumno[s/n]?: ');
+   readln(opcion);
+   IF (opcion <> 's') AND (opcion <> 'n') THEN
+    BEGIN
+    textcolor(lightred);
+    writeln();
+    writeln('///////////////////////////////////////');
+    writeln('X VALOR INCORRECTO. INGRESE NUEVAMENE X');
+    writeln('///////////////////////////////////////');
+    writeln();
+    END;
+   UNTIL (opcion = 's') OR (opcion = 'n');
+   IF opcion = 's' THEN
+    BEGIN
+    seek(archivo_profesional,0);
+    WHILE NOT eof(archivo_profesional) DO
+     BEGIN
+     read(archivo_profesional,registro_profesional);
+     IF (registro_profesional.legajo = legajo) THEN
+      BEGIN
+      registro_profesional.activo:= false;
+      seek(archivo_profesional,filepos(archivo_profesional) - 1);
+      write(archivo_profesional,registro_profesional);
+      END;
+     END;
+     textcolor(lightgreen);
+     writeln();
+     writeln('======================================================');
+     writeln('*** SE DIERON DE BAJA LOS REGISTROS DE ESTE ALUMNO ***');
+     writeln('======================================================');
+     writeln();
+    END
+   ELSE
+    BEGIN
+    textcolor(lightcyan);
+    writeln();
+    writeln('===================');
+    writeln('° NO HAY PROBLEMA °');
+    writeln('===================');
+    writeln();
+    END;
+   REPEAT
+    textcolor(white);
+    write('Desea dar de baja a otro alumno[s/n]?: ');
+    readln(opcion);
+    IF (opcion <> 's') AND (opcion <> 'n') THEN
+     BEGIN
+     textcolor(lightred);
+     writeln();
+     writeln('////////////////////////////////////////');
+     writeln('X VALOR INCORRECTO. INGRESE NUEVAMENTE X');
+     writeln('////////////////////////////////////////');
+     writeln();
+     END;
+   UNTIL (opcion = 's') OR (opcion = 'n');
+ close(archivo_profesional);
+ END;
+    UNTIL (opcion = 'n');
+END;
+
+
 PROCEDURE baja_logica_alumno;
 VAR
  opcion: integer;
@@ -606,9 +702,9 @@ VAR
   1:BEGIN
     dar_de_baja_en_basico;
     END;
-{  2:BEGIN
+  2:BEGIN
     dar_de_baja_en_profesional;
-    END;   }
+    END;
   END;
  UNTIL (opcion = 3);
  END;
